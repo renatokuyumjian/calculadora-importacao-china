@@ -8,7 +8,7 @@ import {
   type ProductInput,
   type ProductResult,
 } from "@shared/nationalizationBasics";
-import { ExternalLink, Info, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Info, Plus, Trash2 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 const brlFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -178,7 +178,7 @@ function productTaxExplanation(product: ProductResult | undefined, tax: "ii" | "
   if (tax === "icms") {
     const numerator = product.customsValueBrl + product.iiBrl + product.ipiImportBrl + product.pisImportBrl + product.cofinsImportBrl + product.allocatedAduaneiraCostsBrl;
     return {
-      base: `Base por dentro antes do ICMS: valor aduaneiro ${brl(product.customsValueBrl)} + II ${brl(product.iiBrl)} + IPI ${brl(product.ipiImportBrl)} + PIS ${brl(product.pisImportBrl)} + COFINS ${brl(product.cofinsImportBrl)} + custos aduaneiros rateados ${brl(product.allocatedAduaneiraCostsBrl)} = ${brl(numerator)}. Despesas portuárias brasileiras pagas a terceiros (${brl(product.allocatedPortExpensesBrl)}), capatazias nacionais destacadas (${brl(product.allocatedCapataziasBrl)}) e frete rodoviário pós-desembaraço (${brl(product.allocatedRoadFreightBrl)}) ficam fora desta base. Base final: ${brl(product.icmsImportBaseBrl)}.`,
+      base: `Base por dentro antes do ICMS: valor aduaneiro ${brl(product.customsValueBrl)} + II ${brl(product.iiBrl)} + IPI ${brl(product.ipiImportBrl)} + PIS ${brl(product.pisImportBrl)} + COFINS ${brl(product.cofinsImportBrl)} + custos aduaneiros rateados ${brl(product.allocatedAduaneiraCostsBrl)} = ${brl(numerator)}. Despesas portuárias brasileiras pagas a terminais, operadores, recintos alfandegados ou terceiros privados (${brl(product.allocatedPortExpensesBrl)}), capatazias nacionais destacadas (${brl(product.allocatedCapataziasBrl)}) e frete rodoviário pós-desembaraço (${brl(product.allocatedRoadFreightBrl)}) ficam fora desta base. Base final: ${brl(product.icmsImportBaseBrl)}.`,
       formula: `Base ICMS = ${brl(numerator)} ÷ (1 - ${percent(product.icmsImportRate)}). ICMS = base ICMS ${brl(product.icmsImportBaseBrl)} × ${percent(product.icmsImportRate)} = ${brl(product.icmsImportBrl)}.`,
       reason: "O ICMS-Importação é tratado por dentro nesta simulação: a própria carga de ICMS compõe a base. Nesta versão, apenas despesas aduaneiras que continuam no numerador, como Siscomex e AFRMM, entram na base; despesas portuárias brasileiras pagas a terceiros, capatazias nacionais destacadas e frete rodoviário contratado após o desembaraço permanecem apenas no custo nacionalizado.",
     };
@@ -228,7 +228,7 @@ function totalTaxExplanation(result: BasicNationalizationResult, tax: "ii" | "ip
     return {
       base: "Soma dos valores de ICMS-Importação calculados por dentro em cada produto, usando a base individual de cada item com custos aduaneiros rateados e sem incluir despesas portuárias brasileiras pagas a terceiros, capatazias nacionais destacadas nem frete rodoviário pós-desembaraço.",
       formula: `ICMS-Importação total = soma do ICMS de todos os produtos = ${brl(result.totalIcmsImportBrl)}.`,
-      reason: "Como o ICMS pode variar por item e sua base é calculada por dentro, o total consolidado precisa somar os cálculos individuais para manter coerência com cada NCM. Despesas portuárias brasileiras pagas a terceiros, capatazias nacionais destacadas e frete rodoviário nacional continuam no custo nacionalizado, mas não aumentam a base do ICMS-Importação.",
+      reason: "Como o ICMS pode variar por item e sua base é calculada por dentro, o total consolidado precisa somar os cálculos individuais para manter coerência com cada NCM.",
     };
   }
 
@@ -246,10 +246,176 @@ function newProduct(): ProductInput {
   };
 }
 
+// ── Compact list row (collapsed) ──────────────────────────────────────────────
+
+function ProductRow({
+  index,
+  product,
+  calculated,
+  expanded,
+  onToggle,
+  onRemove,
+  onUpdate,
+  isOnly,
+}: {
+  index: number;
+  product: ProductInput;
+  calculated: ProductResult | undefined;
+  expanded: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+  onUpdate: (patch: Partial<ProductInput>) => void;
+  isOnly: boolean;
+}) {
+  const label = product.description || `Produto ${index + 1}`;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* ── Summary row ─────────────────────────────────────────────────────── */}
+      <div
+        className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 md:gap-4"
+        onClick={onToggle}
+        role="button"
+        aria-expanded={expanded}
+      >
+        {/* Index */}
+        <span className="w-6 shrink-0 text-center text-sm font-bold text-slate-400">{index + 1}</span>
+
+        {/* Description + NCM */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-slate-900">{label}</p>
+          <p className="truncate text-xs text-slate-500">{product.ncm || <span className="italic">NCM não informado</span>}</p>
+        </div>
+
+        {/* Key metrics – hidden on very small screens */}
+        <div className="hidden shrink-0 text-right sm:block">
+          <p className="text-xs text-slate-500">Qtd</p>
+          <p className="text-sm font-medium text-slate-800">{number(product.desiredQuantity)}</p>
+        </div>
+
+        <div className="hidden shrink-0 text-right md:block">
+          <p className="text-xs text-slate-500">FOB total</p>
+          <p className="text-sm font-medium text-slate-800">{usd(calculated?.fobTotalUsd || 0)}</p>
+        </div>
+
+        <div className="hidden shrink-0 text-right lg:block">
+          <p className="text-xs text-slate-500">Custo S/ IPI ICMS</p>
+          <p className="text-sm font-medium text-slate-800">{brl(calculated?.costWithoutIpiIcmsBrl || 0)}</p>
+        </div>
+
+        <div className="hidden shrink-0 text-right lg:block">
+          <p className="text-xs text-slate-500">Custo un.</p>
+          <p className="text-sm font-medium text-slate-800">{brl(calculated?.unitCostWithoutIpiIcmsBrl || 0)}</p>
+        </div>
+
+        <div className="hidden shrink-0 text-right xl:block">
+          <p className="text-xs text-slate-500">Índice</p>
+          <p className="text-sm font-medium text-blue-700">{number(calculated?.importIndex || 0)}</p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+            type="button"
+            onClick={e => { e.stopPropagation(); onRemove(); }}
+            disabled={isOnly}
+            title="Remover produto"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400">
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Expanded detail panel ────────────────────────────────────────────── */}
+      {expanded && (
+        <div className="border-t border-slate-200 bg-slate-50 px-5 py-5 space-y-5">
+
+          {/* Inputs */}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <TextField label="Descrição curta do produto" value={product.description} onChange={description => onUpdate({ description })} placeholder="Ex.: garrafa térmica" />
+            <TextField label="NCM" value={product.ncm} onChange={ncm => onUpdate({ ncm })} placeholder="Ex.: 9617.00.10" />
+            <NumberField label="Quantidade desejada" value={product.desiredQuantity} onChange={desiredQuantity => onUpdate({ desiredQuantity })} step="1" />
+            <NumberField label="Preço unitário FOB" value={product.fobUnitUsd} onChange={fobUnitUsd => onUpdate({ fobUnitUsd })} suffix="US$" />
+            <NumberField label="Unidades por carton" value={product.unitsPerCarton} onChange={unitsPerCarton => onUpdate({ unitsPerCarton })} step="1" />
+            <NumberField label="Peso bruto do carton" value={product.grossWeightPerCartonKg} onChange={grossWeightPerCartonKg => onUpdate({ grossWeightPerCartonKg })} suffix="kg" />
+            <NumberField label="Peso líquido do carton" value={product.netWeightPerCartonKg} onChange={netWeightPerCartonKg => onUpdate({ netWeightPerCartonKg })} suffix="kg" />
+            <NumberField label="Altura da caixa" value={product.cartonHeightCm} onChange={cartonHeightCm => onUpdate({ cartonHeightCm })} suffix="cm" />
+            <NumberField label="Largura da caixa" value={product.cartonWidthCm} onChange={cartonWidthCm => onUpdate({ cartonWidthCm })} suffix="cm" />
+            <NumberField label="Comprimento da caixa" value={product.cartonLengthCm} onChange={cartonLengthCm => onUpdate({ cartonLengthCm })} suffix="cm" />
+          </div>
+
+          {/* Tax rates */}
+          <div className="rounded-2xl border border-blue-100 bg-white p-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-blue-800">Alíquotas de importação por NCM</h4>
+            <p className="mt-1 text-sm text-slate-500">Consulte o NCM no simulador da Receita e informe os percentuais abaixo.</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-5">
+              <NumberField label="II" value={product.iiRate} onChange={iiRate => onUpdate({ iiRate })} suffix="%" />
+              <NumberField label="IPI" value={product.ipiImportRate} onChange={ipiImportRate => onUpdate({ ipiImportRate })} suffix="%" />
+              <NumberField label="PIS-Importação" value={product.pisImportRate} onChange={pisImportRate => onUpdate({ pisImportRate })} suffix="%" />
+              <NumberField label="COFINS-Importação" value={product.cofinsImportRate} onChange={cofinsImportRate => onUpdate({ cofinsImportRate })} suffix="%" />
+              <NumberField label="ICMS-Importação" value={product.icmsImportRate} onChange={icmsImportRate => onUpdate({ icmsImportRate })} suffix="%" />
+            </div>
+          </div>
+
+          {/* FOB results */}
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <ResultBox label="FOB unitário em USD" value={usd(calculated?.fobUnitUsd || 0)} />
+            <ResultBox label="FOB total em USD" value={usd(calculated?.fobTotalUsd || 0)} />
+            <ResultBox label="FOB unitário em BRL" value={brl(calculated?.fobUnitBrl || 0)} />
+            <ResultBox label="FOB total em BRL" value={brl(calculated?.fobTotalBrl || 0)} />
+          </div>
+
+          {/* Allocation */}
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+            <ResultBox label="Rateio do frete" value={brl(calculated?.allocatedFreightBrl || 0)} />
+            <ResultBox label="Rateio custos aduaneiros ICMS" value={brl(calculated?.allocatedAduaneiraCostsBrl || 0)} />
+            <ResultBox label="Rateio despesas portuárias fora ICMS" value={brl(calculated?.allocatedPortExpensesBrl || 0)} />
+            <ResultBox label="Rateio capatazias fora ICMS" value={brl(calculated?.allocatedCapataziasBrl || 0)} />
+            <ResultBox label="Rateio frete rodoviário" value={brl(calculated?.allocatedRoadFreightBrl || 0)} />
+            <ResultBox label="Valor aduaneiro" value={brl(calculated?.customsValueBrl || 0)} />
+            <ResultBox label="Participação no FOB" value={`${number(calculated?.sharePercent || 0)}%`} />
+          </div>
+
+          {/* Tax results */}
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <ResultBox label="II" value={brl(calculated?.iiBrl || 0)} explanation={productTaxExplanation(calculated, "ii")} />
+            <ResultBox label="IPI importação" value={brl(calculated?.ipiImportBrl || 0)} explanation={productTaxExplanation(calculated, "ipi")} />
+            <ResultBox label="PIS importação" value={brl(calculated?.pisImportBrl || 0)} explanation={productTaxExplanation(calculated, "pis")} />
+            <ResultBox label="COFINS importação" value={brl(calculated?.cofinsImportBrl || 0)} explanation={productTaxExplanation(calculated, "cofins")} />
+            <ResultBox label="Base ICMS importação" value={brl(calculated?.icmsImportBaseBrl || 0)} explanation={productTaxExplanation(calculated, "icms")} />
+            <ResultBox label="ICMS importação" value={brl(calculated?.icmsImportBrl || 0)} explanation={productTaxExplanation(calculated, "icms")} />
+            <ResultBox label="Total impostos" value={brl(calculated?.importTaxesBrl || 0)} explanation={productTaxExplanation(calculated, "total")} />
+            <ResultBox label="Custo nacionalizado" value={brl(calculated?.landedCostBrl || 0)} />
+            <ResultBox label="Custo total S/ IPI e ICMS" value={brl(calculated?.costWithoutIpiIcmsBrl || 0)} />
+            <ResultBox label="Custo un. S/ IPI e ICMS" value={brl(calculated?.unitCostWithoutIpiIcmsBrl || 0)} />
+            <ResultBox label="Índice importação" value={number(calculated?.importIndex || 0)} />
+          </div>
+
+          {/* Carton results */}
+          <div className="grid gap-3 md:grid-cols-5">
+            <ResultBox label="Cartons necessários" value={number(calculated?.cartons || 0)} />
+            <ResultBox label="Unidades pedidas" value={number(calculated?.orderedUnits || 0)} />
+            <ResultBox label="Peso bruto total" value={`${number(calculated?.totalGrossWeightKg || 0)} kg`} />
+            <ResultBox label="Peso líquido total" value={`${number(calculated?.totalNetWeightKg || 0)} kg`} />
+            <ResultBox label="CBM total" value={`${number(calculated?.totalCbm || 0)} m³`} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function Home() {
   const [exchangeRate, setExchangeRate] = useState(5.05);
   const [premises, setPremises] = useState<PremiseInput[]>(defaultPremises);
   const [products, setProducts] = useState<ProductInput[]>([{ ...defaultProduct }]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set([defaultProduct.id]));
 
   const result = useMemo(
     () => calculateBasicNationalization({ exchangeRate, premises, products }),
@@ -257,19 +423,31 @@ export default function Home() {
   );
 
   function updatePremise(index: number, patch: Partial<PremiseInput>) {
-    setPremises(current => current.map((premise, premiseIndex) => premiseIndex === index ? { ...premise, ...patch } : premise));
+    setPremises(current => current.map((p, i) => i === index ? { ...p, ...patch } : p));
   }
 
   function updateProduct(index: number, patch: Partial<ProductInput>) {
-    setProducts(current => current.map((product, productIndex) => productIndex === index ? { ...product, ...patch } : product));
+    setProducts(current => current.map((p, i) => i === index ? { ...p, ...patch } : p));
   }
 
   function addProduct() {
-    setProducts(current => [...current, newProduct()]);
+    const next = newProduct();
+    setProducts(current => [...current, next]);
+    setExpandedIds(current => new Set([...current, next.id]));
   }
 
   function removeProduct(index: number) {
-    setProducts(current => current.length === 1 ? current : current.filter((_, productIndex) => productIndex !== index));
+    const id = products[index]?.id;
+    setProducts(current => current.length === 1 ? current : current.filter((_, i) => i !== index));
+    if (id) setExpandedIds(current => { const s = new Set(current); s.delete(id); return s; });
+  }
+
+  function toggleExpanded(id: string) {
+    setExpandedIds(current => {
+      const s = new Set(current);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
   }
 
   return (
@@ -298,11 +476,11 @@ export default function Home() {
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="space-y-6">
+            {/* Premises */}
             <Section title="Premissas da calculadora de nacionalização" subtitle="O frete internacional entra no valor aduaneiro. Siscomex e AFRMM são rateados para a base do ICMS-Importação; despesas portuárias brasileiras pagas a terceiros, capatazias nacionais destacadas e frete rodoviário pós-desembaraço entram apenas no custo nacionalizado.">
               <div className="mb-5 max-w-xs">
                 <NumberField label="Dólar / Câmbio" value={exchangeRate} onChange={setExchangeRate} suffix="BRL" />
               </div>
-
               <div className="grid gap-4 md:grid-cols-2">
                 {premises.map((premise, index) => (
                   <div key={premise.key} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -323,107 +501,53 @@ export default function Home() {
               </div>
             </Section>
 
-            <Section title="Produtos que serão importados" subtitle="Preencha um produto por linha. As alíquotas são editáveis para que você use o percentual encontrado pelo NCM no simulador oficial da Receita Federal.">
-              <div className="space-y-5">
-                {products.map((product, index) => {
-                  const calculated = result.products[index];
-                  return (
-                    <article key={product.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-950">Produto {index + 1}</h3>
-                          <p className="text-sm text-slate-500">
-                            {calculated?.cartons || 0} cartons · {number(calculated?.totalGrossWeightKg || 0)} kg bruto · {number(calculated?.totalCbm || 0)} m³ · {usd(calculated?.fobTotalUsd || 0)} FOB · {brl(calculated?.importTaxesBrl || 0)} impostos
-                          </p>
-                        </div>
-                        <button
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          type="button"
-                          onClick={() => removeProduct(index)}
-                          disabled={products.length === 1}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Remover
-                        </button>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <TextField label="Descrição curta do produto" value={product.description} onChange={description => updateProduct(index, { description })} placeholder="Ex.: garrafa térmica" />
-                        <TextField label="NCM" value={product.ncm} onChange={ncm => updateProduct(index, { ncm })} placeholder="Ex.: 9617.00.10" />
-                        <NumberField label="Quantidade desejada" value={product.desiredQuantity} onChange={desiredQuantity => updateProduct(index, { desiredQuantity })} step="1" />
-                        <NumberField label="Preço unitário FOB" value={product.fobUnitUsd} onChange={fobUnitUsd => updateProduct(index, { fobUnitUsd })} suffix="US$" />
-                        <NumberField label="Unidades por carton" value={product.unitsPerCarton} onChange={unitsPerCarton => updateProduct(index, { unitsPerCarton })} step="1" />
-                        <NumberField label="Peso bruto do carton" value={product.grossWeightPerCartonKg} onChange={grossWeightPerCartonKg => updateProduct(index, { grossWeightPerCartonKg })} suffix="kg" />
-                        <NumberField label="Peso líquido do carton" value={product.netWeightPerCartonKg} onChange={netWeightPerCartonKg => updateProduct(index, { netWeightPerCartonKg })} suffix="kg" />
-                        <NumberField label="Altura da caixa" value={product.cartonHeightCm} onChange={cartonHeightCm => updateProduct(index, { cartonHeightCm })} suffix="cm" />
-                        <NumberField label="Largura da caixa" value={product.cartonWidthCm} onChange={cartonWidthCm => updateProduct(index, { cartonWidthCm })} suffix="cm" />
-                        <NumberField label="Comprimento da caixa" value={product.cartonLengthCm} onChange={cartonLengthCm => updateProduct(index, { cartonLengthCm })} suffix="cm" />
-                      </div>
-
-                      <div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4">
-                        <h4 className="text-sm font-semibold uppercase tracking-wide text-blue-800">Alíquotas de importação por NCM</h4>
-                        <p className="mt-1 text-sm text-slate-500">Consulte o NCM no simulador da Receita e informe os percentuais abaixo. Depois, passe o mouse sobre o ícone de cada imposto para ver a base, a fórmula e a justificativa do cálculo.</p>
-                        <div className="mt-4 grid gap-4 md:grid-cols-5">
-                          <NumberField label="II" value={product.iiRate} onChange={iiRate => updateProduct(index, { iiRate })} suffix="%" />
-                          <NumberField label="IPI" value={product.ipiImportRate} onChange={ipiImportRate => updateProduct(index, { ipiImportRate })} suffix="%" />
-                          <NumberField label="PIS-Importação" value={product.pisImportRate} onChange={pisImportRate => updateProduct(index, { pisImportRate })} suffix="%" />
-                          <NumberField label="COFINS-Importação" value={product.cofinsImportRate} onChange={cofinsImportRate => updateProduct(index, { cofinsImportRate })} suffix="%" />
-                          <NumberField label="ICMS-Importação" value={product.icmsImportRate} onChange={icmsImportRate => updateProduct(index, { icmsImportRate })} suffix="%" />
-                        </div>
-                      </div>
-
-                      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <ResultBox label="FOB unitário em USD" value={usd(calculated?.fobUnitUsd || 0)} />
-                        <ResultBox label="FOB total em USD" value={usd(calculated?.fobTotalUsd || 0)} />
-                        <ResultBox label="FOB unitário em BRL" value={brl(calculated?.fobUnitBrl || 0)} />
-                        <ResultBox label="FOB total em BRL" value={brl(calculated?.fobTotalBrl || 0)} />
-                      </div>
-
-                      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
-                        <ResultBox label="Rateio do frete" value={brl(calculated?.allocatedFreightBrl || 0)} />
-                        <ResultBox label="Rateio custos aduaneiros ICMS" value={brl(calculated?.allocatedAduaneiraCostsBrl || 0)} />
-                        <ResultBox label="Rateio despesas portuárias fora ICMS" value={brl(calculated?.allocatedPortExpensesBrl || 0)} />
-                        <ResultBox label="Rateio capatazias fora ICMS" value={brl(calculated?.allocatedCapataziasBrl || 0)} />
-                        <ResultBox label="Rateio frete rodoviário" value={brl(calculated?.allocatedRoadFreightBrl || 0)} />
-                        <ResultBox label="Valor aduaneiro" value={brl(calculated?.customsValueBrl || 0)} />
-                        <ResultBox label="Participação no FOB" value={`${number(calculated?.sharePercent || 0)}%`} />
-                      </div>
-
-                      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <ResultBox label="II" value={brl(calculated?.iiBrl || 0)} explanation={productTaxExplanation(calculated, "ii")} />
-                        <ResultBox label="IPI importação" value={brl(calculated?.ipiImportBrl || 0)} explanation={productTaxExplanation(calculated, "ipi")} />
-                        <ResultBox label="PIS importação" value={brl(calculated?.pisImportBrl || 0)} explanation={productTaxExplanation(calculated, "pis")} />
-                        <ResultBox label="COFINS importação" value={brl(calculated?.cofinsImportBrl || 0)} explanation={productTaxExplanation(calculated, "cofins")} />
-                        <ResultBox label="Base ICMS importação" value={brl(calculated?.icmsImportBaseBrl || 0)} explanation={productTaxExplanation(calculated, "icms")} />
-                        <ResultBox label="ICMS importação" value={brl(calculated?.icmsImportBrl || 0)} explanation={productTaxExplanation(calculated, "icms")} />
-                        <ResultBox label="Total impostos" value={brl(calculated?.importTaxesBrl || 0)} explanation={productTaxExplanation(calculated, "total")} />
-                        <ResultBox label="Custo nacionalizado" value={brl(calculated?.landedCostBrl || 0)} />
-                        <ResultBox label="Custo total S/ IPI e ICMS" value={brl(calculated?.costWithoutIpiIcmsBrl || 0)} />
-                        <ResultBox label="Custo un. S/ IPI e ICMS" value={brl(calculated?.unitCostWithoutIpiIcmsBrl || 0)} />
-                        <ResultBox label="Índice importação" value={number(calculated?.importIndex || 0)} />
-                      </div>
-
-                      <div className="mt-3 grid gap-3 md:grid-cols-5">
-                        <ResultBox label="Cartons necessários" value={number(calculated?.cartons || 0)} />
-                        <ResultBox label="Unidades pedidas" value={number(calculated?.orderedUnits || 0)} />
-                        <ResultBox label="Peso bruto total" value={`${number(calculated?.totalGrossWeightKg || 0)} kg`} />
-                        <ResultBox label="Peso líquido total" value={`${number(calculated?.totalNetWeightKg || 0)} kg`} />
-                        <ResultBox label="CBM total" value={`${number(calculated?.totalCbm || 0)} m³`} />
-                      </div>
-                    </article>
-                  );
-                })}
+            {/* Products */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-950">Produtos que serão importados</h2>
+                  <p className="mt-1 text-sm text-slate-600">{products.length} {products.length === 1 ? "produto" : "produtos"} — clique em um item para expandir e editar.</p>
+                </div>
+                <button
+                  className="inline-flex shrink-0 items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                  type="button"
+                  onClick={addProduct}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Adicionar
+                </button>
               </div>
 
-              <button
-                className="mt-5 inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
-                type="button"
-                onClick={addProduct}
-              >
-                <Plus className="mr-2 h-4 w-4" /> Adicionar produto
-              </button>
-            </Section>
+              {/* Column headers (visible md+) */}
+              <div className="mb-1 hidden items-center gap-3 px-4 md:flex md:gap-4">
+                <span className="w-6 shrink-0" />
+                <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Produto / NCM</span>
+                <span className="hidden w-16 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 sm:block">Qtd</span>
+                <span className="hidden w-28 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 md:block">FOB total</span>
+                <span className="hidden w-32 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 lg:block">Custo S/ IPI ICMS</span>
+                <span className="hidden w-24 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 lg:block">Custo un.</span>
+                <span className="hidden w-16 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 xl:block">Índice</span>
+                <span className="w-20 shrink-0" />
+              </div>
+
+              <div className="space-y-2">
+                {products.map((product, index) => (
+                  <ProductRow
+                    key={product.id}
+                    index={index}
+                    product={product}
+                    calculated={result.products[index]}
+                    expanded={expandedIds.has(product.id)}
+                    onToggle={() => toggleExpanded(product.id)}
+                    onRemove={() => removeProduct(index)}
+                    onUpdate={patch => updateProduct(index, patch)}
+                    isOnly={products.length === 1}
+                  />
+                ))}
+              </div>
+            </section>
           </div>
 
+          {/* Sidebar summary */}
           <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
             <Section title="Resumo consolidado" subtitle="Totais de todos os produtos e impostos calculados com as alíquotas informadas por item.">
               <div className="grid gap-3">
