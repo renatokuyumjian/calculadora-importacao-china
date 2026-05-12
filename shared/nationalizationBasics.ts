@@ -69,6 +69,7 @@ export type ProductResult = ProductInput & {
   unitLandedCostBrl: number;
   costWithoutIpiIcmsBrl: number;
   unitCostWithoutIpiIcmsBrl: number;
+  importIndex: number;
 };
 
 export type BasicNationalizationInput = {
@@ -248,6 +249,7 @@ export function calculateProduct(
     unitLandedCostBrl: safeDiv(landedCostBrl, desiredQuantity),
     costWithoutIpiIcmsBrl,
     unitCostWithoutIpiIcmsBrl: safeDiv(costWithoutIpiIcmsBrl, desiredQuantity),
+    importIndex: safeDiv(safeDiv(costWithoutIpiIcmsBrl, desiredQuantity), fobUnitUsd),
   };
 }
 
