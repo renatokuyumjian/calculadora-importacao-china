@@ -422,8 +422,9 @@ export default function Home() {
   const [exchangeRate, setExchangeRate] = useState(5.05);
   const [premises, setPremises] = useState<PremiseInput[]>(defaultPremises);
   const [products, setProducts] = useState<ProductInput[]>([{ ...defaultProduct }]);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set([defaultProduct.id]));
-  const [premisesOpen, setPremisesOpen] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [premisesOpen, setPremisesOpen] = useState(false);
+  const [resumoOpen, setResumoOpen] = useState(false);
 
   // Load project from localStorage on mount
   useEffect(() => {
@@ -517,8 +518,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-6">
+        <div className="space-y-6">
             {/* Premises */}
             <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <button
@@ -566,6 +566,47 @@ export default function Home() {
               )}
             </section>
 
+            {/* Resumo consolidado */}
+            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <button
+                className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left hover:bg-slate-50"
+                type="button"
+                onClick={() => setResumoOpen(o => !o)}
+                aria-expanded={resumoOpen}
+              >
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-950">Resumo consolidado</h2>
+                  {!resumoOpen && (
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      FOB {usd(result.totalFobUsd)} · Impostos {brl(result.totalImportTaxesBrl)} · Custo nac. {brl(result.totalLandedCostBrl)}
+                    </p>
+                  )}
+                </div>
+                {resumoOpen ? <ChevronUp className="h-5 w-5 shrink-0 text-slate-400" /> : <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />}
+              </button>
+              {resumoOpen && (
+                <div className="border-t border-slate-200 px-5 pb-5 pt-5">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <ResultBox label="Premissas em reais" value={brl(result.totalPremisesBrl)} />
+                    <ResultBox label="FOB total em USD" value={usd(result.totalFobUsd)} />
+                    <ResultBox label="FOB total em BRL" value={brl(result.totalFobBrl)} />
+                    <ResultBox label="Valor aduaneiro total" value={brl(result.totalCustomsValueBrl)} />
+                    <ResultBox label="II total" value={brl(result.totalIiBrl)} explanation={totalTaxExplanation(result, "ii")} />
+                    <ResultBox label="IPI importação total" value={brl(result.totalIpiImportBrl)} explanation={totalTaxExplanation(result, "ipi")} />
+                    <ResultBox label="PIS importação total" value={brl(result.totalPisImportBrl)} explanation={totalTaxExplanation(result, "pis")} />
+                    <ResultBox label="COFINS importação total" value={brl(result.totalCofinsImportBrl)} explanation={totalTaxExplanation(result, "cofins")} />
+                    <ResultBox label="ICMS importação total" value={brl(result.totalIcmsImportBrl)} explanation={totalTaxExplanation(result, "icms")} />
+                    <ResultBox label="Total de impostos" value={brl(result.totalImportTaxesBrl)} explanation={totalTaxExplanation(result, "total")} />
+                    <ResultBox label="Custo nacionalizado total" value={brl(result.totalLandedCostBrl)} />
+                    <ResultBox label="Cartons totais" value={number(result.totalCartons)} />
+                    <ResultBox label="Peso bruto total" value={`${number(result.totalGrossWeightKg)} kg`} />
+                    <ResultBox label="Peso líquido total" value={`${number(result.totalNetWeightKg)} kg`} />
+                    <ResultBox label="CBM total" value={`${number(result.totalCbm)} m³`} />
+                  </div>
+                </div>
+              )}
+            </section>
+
             {/* Products */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-4">
@@ -598,30 +639,6 @@ export default function Home() {
                 ))}
               </div>
             </section>
-          </div>
-
-          {/* Sidebar summary */}
-          <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-            <Section title="Resumo consolidado" subtitle="Totais de todos os produtos e impostos calculados com as alíquotas informadas por item.">
-              <div className="grid gap-3">
-                <ResultBox label="Premissas em reais" value={brl(result.totalPremisesBrl)} />
-                <ResultBox label="FOB total em USD" value={usd(result.totalFobUsd)} />
-                <ResultBox label="FOB total em BRL" value={brl(result.totalFobBrl)} />
-                <ResultBox label="Valor aduaneiro total" value={brl(result.totalCustomsValueBrl)} />
-                <ResultBox label="II total" value={brl(result.totalIiBrl)} explanation={totalTaxExplanation(result, "ii")} />
-                <ResultBox label="IPI importação total" value={brl(result.totalIpiImportBrl)} explanation={totalTaxExplanation(result, "ipi")} />
-                <ResultBox label="PIS importação total" value={brl(result.totalPisImportBrl)} explanation={totalTaxExplanation(result, "pis")} />
-                <ResultBox label="COFINS importação total" value={brl(result.totalCofinsImportBrl)} explanation={totalTaxExplanation(result, "cofins")} />
-                <ResultBox label="ICMS importação total" value={brl(result.totalIcmsImportBrl)} explanation={totalTaxExplanation(result, "icms")} />
-                <ResultBox label="Total de impostos" value={brl(result.totalImportTaxesBrl)} explanation={totalTaxExplanation(result, "total")} />
-                <ResultBox label="Custo nacionalizado total" value={brl(result.totalLandedCostBrl)} />
-                <ResultBox label="Cartons totais" value={number(result.totalCartons)} />
-                <ResultBox label="Peso bruto total" value={`${number(result.totalGrossWeightKg)} kg`} />
-                <ResultBox label="Peso líquido total" value={`${number(result.totalNetWeightKg)} kg`} />
-                <ResultBox label="CBM total" value={`${number(result.totalCbm)} m³`} />
-              </div>
-            </Section>
-          </aside>
         </div>
       </div>
     </main>
