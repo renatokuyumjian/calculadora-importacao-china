@@ -535,18 +535,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Column headers (visible md+) */}
-              <div className="mb-1 hidden items-center gap-3 px-4 md:flex md:gap-4">
-                <span className="w-6 shrink-0" />
-                <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Produto / NCM</span>
-                <span className="hidden w-16 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 sm:block">Qtd</span>
-                <span className="hidden w-28 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 md:block">FOB total</span>
-                <span className="hidden w-32 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 lg:block">Custo S/ IPI ICMS</span>
-                <span className="hidden w-24 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 lg:block">Custo un.</span>
-                <span className="hidden w-16 shrink-0 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 xl:block">Índice</span>
-                <span className="w-20 shrink-0" />
-              </div>
-
               <div className="space-y-2">
                 {products.map((product, index) => (
                   <ProductRow
