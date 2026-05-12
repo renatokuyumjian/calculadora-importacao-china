@@ -1,0 +1,85 @@
+# Project TODO
+
+- [x] Implementar formulário de entrada editável com NCM, descrição, quantidade, valor FOB em USD, frete internacional, seguro, AFRMM, capatazia, NW, GW e CBM.
+- [x] Calcular automaticamente valor aduaneiro/CIF, II, IPI-Importação, PIS-Importação, COFINS-Importação e ICMS-Importação.
+- [x] Integrar cotação USD/BRL em tempo real com fallback manual editável.
+- [x] Criar tabela de alíquotas editável por NCM com busca, seleção e alíquotas padrão de II e IPI.
+- [x] Implementar busca automática de alíquotas fiscais por NCM via fonte/API externa quando disponível, com fallback para base local editável.
+- [x] Exibir resumo consolidado com FOB, frete, seguro, AFRMM, capatazia, tributos discriminados e custo total nacionalizado.
+- [x] Implementar preço de venda ao cliente com cálculo de ICMS próprio, ICMS-ST com IVA-ST editável, IPI na saída, PIS/COFINS cumulativo e monofásico.
+- [x] Calcular créditos fiscais aproveitáveis de IPI e ICMS e resultado líquido da operação.
+- [x] Implementar calculadora de container com CBM, peso, aproveitamento percentual e alerta visual quando limites forem atingidos ou excedidos.
+- [x] Salvar orçamentos por usuário autenticado com histórico consultável.
+- [x] Permitir editar, renomear, duplicar e excluir orçamentos salvos.
+- [x] Criar dashboard com câmbio atual, carga tributária média, margem média, custo médio por NCM e visão geral dos orçamentos.
+- [x] Gerar relatório completo de importação em PDF com tributos, créditos, débitos, landed cost, container e resumo executivo.
+- [x] Armazenar relatório PDF e disponibilizar download futuro ao usuário.
+- [x] Aplicar estética brutalist tipográfica com preto absoluto sobre branco puro, assimetria, linhas geométricas espessas, colchetes, sublinhados e espaço negativo abundante.
+- [x] Criar testes automatizados para fórmulas principais e procedimentos de backend.
+- [x] Validar build, tipagem e funcionamento básico antes da entrega.
+- [x] Incluir o simulador oficial da Receita Federal como referência explícita de experiência e validação dos cálculos por NCM, com link de comparação e observação sobre limitações de automação direta.
+- [x] Adicionar UI para editar e persistir alíquotas II/IPI por NCM na tabela fiscal.
+- [x] Exibir resumo consolidado de custos com frete, seguro, AFRMM, capatazia e demais componentes do landed cost em linhas separadas.
+- [x] Adicionar indicador/agregação de custo médio por NCM no dashboard.
+- [x] Validar que o PDF contém resumo executivo, tributos, créditos, débitos, landed cost e container.
+- [x] Executar build de produção e checagem funcional básica no navegador antes da entrega.
+- [x] Adicionar teste automatizado que gere um PDF e valide a presença de resumo executivo, tributos, créditos, débitos, landed cost e container.
+- [x] Registrar checagem funcional final da interface no navegador com os fluxos críticos disponíveis.
+- [x] Simplificar o layout para uma visualização mais limpa, objetiva e fácil de operar, reduzindo a estética brutalist pesada.
+- [x] Adicionar campo de preço unitário do produto em USD e calcular automaticamente o valor FOB total a partir da quantidade.
+- [x] Exibir de forma clara a relação quantidade × preço unitário = FOB total nos resumos e entradas principais.
+- [x] Permitir adicionar mais de um NCM dentro do mesmo orçamento, com itens separados e total consolidado.
+- [x] Permitir calcular cada item do orçamento por quantidade × preço unitário, mantendo NCM, descrição e alíquotas por item.
+- [x] Atualizar histórico e PDF para exibir os itens/NCMs do orçamento e o total consolidado.
+- [x] Ao adicionar cada produto, permitir informar peso unitário, quantidade por carton/caixa e dimensões do carton.
+- [x] Calcular automaticamente cartons necessários, CBM total e peso total por produto a partir dos dados de carton.
+- [x] Consolidar quantidade, FOB, peso, CBM, tributos e landed cost de todos os produtos/NCMs no orçamento.
+- [x] Recomeçar a página principal do zero com foco apenas em premissas de nacionalização e produtos, ocultando funcionalidades avançadas por enquanto.
+- [x] Criar seção superior de premissas com dólar/câmbio, frete, capatazias, despesas portuárias, Siscomex, AFRMM e frete rodoviário.
+- [x] Permitir que cada premissa de custo seja informada em USD ou BRL; quando USD, converter automaticamente pelo câmbio, e quando BRL, manter o valor informado.
+- [x] Criar cadastro de produtos com descrição curta, NCM, quantidade desejada e unidades por carton.
+- [x] Calcular automaticamente a quantidade de cartons necessária para atingir a quantidade desejada, arredondando para cima.
+- [x] Permitir informar peso bruto e peso líquido por carton e calcular peso bruto total e peso líquido total por produto.
+- [x] Permitir informar altura, largura e comprimento da caixa em centímetros e calcular CBM total por produto.
+- [x] Exibir apenas os totais básicos desta primeira etapa: custos convertidos das premissas, cartons totais, peso bruto total, peso líquido total e CBM total.
+- [x] Nesta etapa, manter a calculadora limitada apenas a premissas em BRL/USD e produtos com cartons, pesos e CBM, sem impostos, PDF, histórico, login, alíquotas ou outras funcionalidades avançadas.
+- [x] Adicionar campo de preço unitário FOB em USD no cadastro de cada produto.
+- [x] Calcular automaticamente FOB total em USD por produto como quantidade desejada vezes preço unitário FOB em USD.
+- [x] Calcular automaticamente FOB unitário em BRL por produto usando o câmbio informado nas premissas.
+- [x] Calcular automaticamente FOB total em BRL por produto usando o câmbio informado nas premissas.
+- [x] Atualizar os testes automatizados para validar os novos cálculos FOB por produto.
+- [x] Adicionar alíquotas editáveis por item para II, IPI, PIS-Importação, COFINS-Importação e ICMS-Importação.
+- [x] Calcular impostos de importação item por item com base no valor FOB em BRL e nas premissas de custos convertidas.
+- [x] Ratear as premissas de nacionalização entre os itens para formar uma base proporcional por produto.
+- [x] Exibir subtotal fiscal por produto com valor aduaneiro, II, IPI, PIS, COFINS, ICMS e total de impostos.
+- [x] Exibir total consolidado de todos os itens com bases e impostos somados.
+- [x] Atualizar testes automatizados para validar impostos por item e total consolidado.
+- [x] Consultar o simulador oficial da Receita Federal como referência para experiência e validação de impostos por NCM.
+- [x] Adicionar alíquotas editáveis por item para II, IPI, PIS-Importação, COFINS-Importação e ICMS-Importação.
+- [x] Calcular impostos de importação item por item com base no valor FOB em BRL e nas premissas de custos convertidas.
+- [x] Ratear as premissas de nacionalização entre os itens para formar uma base proporcional por produto.
+- [x] Exibir subtotal fiscal por produto com valor aduaneiro, II, IPI, PIS, COFINS, ICMS e total de impostos.
+- [x] Exibir total consolidado de todos os itens com bases e impostos somados.
+- [x] Atualizar testes automatizados para validar impostos por item e total consolidado.
+- [x] Adicionar explicação em hover para II mostrando base de cálculo, fórmula e justificativa.
+- [x] Adicionar explicação em hover para IPI-Importação mostrando base de cálculo, fórmula e justificativa.
+- [x] Adicionar explicação em hover para PIS-Importação mostrando base de cálculo, fórmula e justificativa.
+- [x] Adicionar explicação em hover para COFINS-Importação mostrando base de cálculo, fórmula e justificativa.
+- [x] Adicionar explicação em hover para ICMS-Importação mostrando base de cálculo, fórmula por dentro e justificativa.
+- [x] Atualizar testes automatizados ou cobertura de interface para garantir que as explicações fiscais estejam renderizadas.
+- [x] Corrigir a fórmula para excluir o frete rodoviário nacional da base do ICMS-importação.
+- [x] Manter o frete rodoviário nacional somado apenas ao custo total nacionalizado/landed cost.
+- [x] Atualizar textos explicativos/hover do ICMS para informar que o frete rodoviário pós-desembaraço não entra na base.
+- [x] Atualizar testes automatizados para validar que o frete rodoviário nacional não altera o ICMS-importação, mas altera o custo total.
+- [x] Avaliar se capatazias devem compor a base de cálculo do ICMS-Importação, comparando a planilha da empresa com a base legal e interpretações oficiais.
+- [x] Se a conclusão fiscal recomendar ajuste, atualizar fórmula, textos explicativos e testes para capatazias na base do ICMS-Importação.
+- [x] Retirar Capatazias do grupo de custos aduaneiros que entra no numerador do ICMS-Importação.
+- [x] Manter Capatazias somada ao custo nacionalizado e ao total de demais custos, sem alterar o landed cost esperado.
+- [x] Atualizar textos explicativos da interface e documentação interna para indicar que capatazia nacional destacada fica fora da base do ICMS.
+- [x] Atualizar testes automatizados para comprovar que Capatazias não altera o ICMS-Importação, mas altera o custo nacionalizado.
+- [x] Avaliar se Despesas Portuárias devem compor a base de cálculo do ICMS-Importação, distinguindo serviços portuários privados de valores efetivamente pagos à repartição alfandegária.
+- [x] Avaliar e, se confirmado pelo usuário, excluir Despesas Portuárias brasileiras pagas a terminais, operadores, recintos alfandegados ou terceiros privados da base do ICMS-Importação, mantendo-as no custo nacionalizado.
+- [x] Retirar Despesas Portuárias brasileiras pagas a terceiros do grupo de custos aduaneiros que entra no numerador do ICMS-Importação.
+- [x] Manter Despesas Portuárias brasileiras rateadas no custo nacionalizado e no total de demais custos.
+- [x] Atualizar a interface para explicar que Despesas Portuárias brasileiras pagas a terceiros ficam fora da base do ICMS.
+- [x] Atualizar testes automatizados para comprovar que Despesas Portuárias não alteram o ICMS-Importação, mas alteram o custo nacionalizado.
