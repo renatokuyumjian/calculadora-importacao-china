@@ -1,3 +1,4 @@
+import { getProject, saveProject } from "@/lib/projects";
 import {
   calculateBasicNationalization,
   defaultPremises,
@@ -8,8 +9,9 @@ import {
   type ProductInput,
   type ProductResult,
 } from "@shared/nationalizationBasics";
-import { ChevronDown, ChevronUp, ExternalLink, Info, Plus, Trash2 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, Info, Plus, Trash2 } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useParams } from "wouter";
 
 const brlFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const usdFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD" });
@@ -412,11 +414,44 @@ function ProductRow({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
+  const createdAtRef = useRef<string>(new Date().toISOString());
+  const [loaded, setLoaded] = useState(false);
+  const [projectName, setProjectName] = useState("Novo projeto");
   const [exchangeRate, setExchangeRate] = useState(5.05);
   const [premises, setPremises] = useState<PremiseInput[]>(defaultPremises);
   const [products, setProducts] = useState<ProductInput[]>([{ ...defaultProduct }]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set([defaultProduct.id]));
   const [premisesOpen, setPremisesOpen] = useState(true);
+
+  // Load project from localStorage on mount
+  useEffect(() => {
+    if (!id) { navigate("/"); return; }
+    const project = getProject(id);
+    if (!project) { navigate("/"); return; }
+    createdAtRef.current = project.createdAt;
+    setProjectName(project.name);
+    setExchangeRate(project.exchangeRate);
+    setPremises(project.premises);
+    setProducts(project.products);
+    setExpandedIds(new Set());
+    setLoaded(true);
+  }, [id]);
+
+  // Auto-save whenever data changes
+  useEffect(() => {
+    if (!loaded || !id) return;
+    saveProject({
+      id,
+      name: projectName,
+      createdAt: createdAtRef.current,
+      updatedAt: new Date().toISOString(),
+      exchangeRate,
+      premises,
+      products,
+    });
+  }, [loaded, id, projectName, exchangeRate, premises, products]);
 
   const result = useMemo(
     () => calculateBasicNationalization({ exchangeRate, premises, products }),
@@ -454,18 +489,25 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-        <header className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Calculadora de Nacionalização</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Premissas, produtos, FOB e impostos de importação</h1>
-          <p className="mt-3 max-w-4xl text-base text-slate-600">
-            Informe as premissas em dólar ou real, cadastre os produtos e preencha as alíquotas conforme o NCM para calcular FOB, valor aduaneiro, impostos item por item e total consolidado.
-          </p>
-          <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
-            <p>
-              Use o simulador oficial da Receita Federal como referência para conferir NCM, alíquotas e tratamento tributário. Como o site oficial possui validação humana, esta calculadora mantém os campos de alíquotas editáveis para você transcrever os percentuais corretos por item.
-            </p>
+        <header className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              onClick={() => navigate("/")}
+            >
+              <ArrowLeft className="h-4 w-4" /> Projetos
+            </button>
+            <input
+              className="min-w-0 flex-1 rounded-xl border border-transparent px-3 py-2 text-xl font-bold text-slate-950 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              value={projectName}
+              onChange={e => setProjectName(e.target.value)}
+              placeholder="Nome do projeto"
+            />
+          </div>
+          <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-950">
+            <p>Use o simulador oficial da Receita Federal para conferir NCM e alíquotas.</p>
             <a
-              className="mt-2 inline-flex items-center font-semibold text-blue-800 underline-offset-4 hover:underline"
+              className="mt-1 inline-flex items-center font-semibold text-blue-800 underline-offset-4 hover:underline"
               href="https://www4.receita.fazenda.gov.br/simulador/"
               target="_blank"
               rel="noreferrer"
