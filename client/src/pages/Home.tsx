@@ -289,27 +289,22 @@ function ProductRow({
 
         {/* Key metrics – hidden on very small screens */}
         <div className="hidden shrink-0 text-right sm:block">
-          <p className="text-xs text-slate-500">Qtd</p>
           <p className="text-sm font-medium text-slate-800">{number(product.desiredQuantity)}</p>
         </div>
 
         <div className="hidden shrink-0 text-right md:block">
-          <p className="text-xs text-slate-500">FOB total</p>
           <p className="text-sm font-medium text-slate-800">{usd(calculated?.fobTotalUsd || 0)}</p>
         </div>
 
         <div className="hidden shrink-0 text-right lg:block">
-          <p className="text-xs text-slate-500">Custo S/ IPI ICMS</p>
           <p className="text-sm font-medium text-slate-800">{brl(calculated?.costWithoutIpiIcmsBrl || 0)}</p>
         </div>
 
         <div className="hidden shrink-0 text-right lg:block">
-          <p className="text-xs text-slate-500">Custo un.</p>
           <p className="text-sm font-medium text-slate-800">{brl(calculated?.unitCostWithoutIpiIcmsBrl || 0)}</p>
         </div>
 
         <div className="hidden shrink-0 text-right xl:block">
-          <p className="text-xs text-slate-500">Índice</p>
           <p className="text-sm font-medium text-blue-700">{number(calculated?.importIndex || 0)}</p>
         </div>
 
