@@ -397,6 +397,8 @@ export default function Home() {
                         <ResultBox label="ICMS importação" value={brl(calculated?.icmsImportBrl || 0)} explanation={productTaxExplanation(calculated, "icms")} />
                         <ResultBox label="Total impostos" value={brl(calculated?.importTaxesBrl || 0)} explanation={productTaxExplanation(calculated, "total")} />
                         <ResultBox label="Custo nacionalizado" value={brl(calculated?.landedCostBrl || 0)} />
+                        <ResultBox label="Custo total S/ IPI e ICMS" value={brl(calculated?.costWithoutIpiIcmsBrl || 0)} />
+                        <ResultBox label="Custo un. S/ IPI e ICMS" value={brl(calculated?.unitCostWithoutIpiIcmsBrl || 0)} />
                       </div>
 
                       <div className="mt-3 grid gap-3 md:grid-cols-5">

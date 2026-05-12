@@ -67,6 +67,8 @@ export type ProductResult = ProductInput & {
   importTaxesBrl: number;
   landedCostBrl: number;
   unitLandedCostBrl: number;
+  costWithoutIpiIcmsBrl: number;
+  unitCostWithoutIpiIcmsBrl: number;
 };
 
 export type BasicNationalizationInput = {
@@ -204,6 +206,7 @@ export function calculateProduct(
   const icmsImportBrl = icmsImportBaseBrl * pct(icmsImportRate);
   const importTaxesBrl = iiBrl + ipiImportBrl + pisImportBrl + cofinsImportBrl + icmsImportBrl;
   const landedCostBrl = customsValueBrl + allocatedOtherCostsBrl + importTaxesBrl;
+  const costWithoutIpiIcmsBrl = landedCostBrl - ipiImportBrl - icmsImportBrl;
 
   return {
     ...product,
@@ -243,6 +246,8 @@ export function calculateProduct(
     importTaxesBrl,
     landedCostBrl,
     unitLandedCostBrl: safeDiv(landedCostBrl, desiredQuantity),
+    costWithoutIpiIcmsBrl,
+    unitCostWithoutIpiIcmsBrl: safeDiv(costWithoutIpiIcmsBrl, desiredQuantity),
   };
 }
 

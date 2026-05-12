@@ -116,3 +116,4 @@ client/public/__manus__/version.json
 .manus/
 client/public/__manus__/
 .manus-logs/
+.vercel
