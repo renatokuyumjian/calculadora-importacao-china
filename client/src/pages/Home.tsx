@@ -416,6 +416,7 @@ export default function Home() {
   const [premises, setPremises] = useState<PremiseInput[]>(defaultPremises);
   const [products, setProducts] = useState<ProductInput[]>([{ ...defaultProduct }]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set([defaultProduct.id]));
+  const [premisesOpen, setPremisesOpen] = useState(true);
 
   const result = useMemo(
     () => calculateBasicNationalization({ exchangeRate, premises, products }),
@@ -477,29 +478,51 @@ export default function Home() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="space-y-6">
             {/* Premises */}
-            <Section title="Premissas da calculadora de nacionalização" subtitle="O frete internacional entra no valor aduaneiro. Siscomex e AFRMM são rateados para a base do ICMS-Importação; despesas portuárias brasileiras pagas a terceiros, capatazias nacionais destacadas e frete rodoviário pós-desembaraço entram apenas no custo nacionalizado.">
-              <div className="mb-5 max-w-xs">
-                <NumberField label="Dólar / Câmbio" value={exchangeRate} onChange={setExchangeRate} suffix="BRL" />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {premises.map((premise, index) => (
-                  <div key={premise.key} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <span className="mb-2 block text-sm font-medium text-slate-700">{premise.label}</span>
-                    <div className="grid grid-cols-[1fr_92px] gap-2">
-                      <input
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-950 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                        type="number"
-                        step="0.01"
-                        value={Number.isFinite(premise.value) ? premise.value : 0}
-                        onChange={event => updatePremise(index, { value: toNumber(event.target.value) })}
-                      />
-                      <CurrencySelect value={premise.currency} onChange={currency => updatePremise(index, { currency })} />
-                    </div>
-                    <p className="mt-2 text-sm text-slate-500">Total em reais: <strong className="text-slate-900">{brl(result.premises[index]?.valueBrl || 0)}</strong></p>
+            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <button
+                className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left hover:bg-slate-50"
+                type="button"
+                onClick={() => setPremisesOpen(o => !o)}
+                aria-expanded={premisesOpen}
+              >
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-950">Premissas da nacionalização</h2>
+                  {!premisesOpen && (
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      Câmbio: {brl(exchangeRate)} · Premissas: {brl(result.totalPremisesBrl)}
+                    </p>
+                  )}
+                </div>
+                {premisesOpen ? <ChevronUp className="h-5 w-5 shrink-0 text-slate-400" /> : <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />}
+              </button>
+
+              {premisesOpen && (
+                <div className="border-t border-slate-200 px-5 pb-5 pt-5">
+                  <p className="mb-5 text-sm text-slate-600">O frete internacional entra no valor aduaneiro. Siscomex e AFRMM são rateados para a base do ICMS-Importação; despesas portuárias brasileiras pagas a terceiros, capatazias nacionais destacadas e frete rodoviário pós-desembaraço entram apenas no custo nacionalizado.</p>
+                  <div className="mb-5 max-w-xs">
+                    <NumberField label="Dólar / Câmbio" value={exchangeRate} onChange={setExchangeRate} suffix="BRL" />
                   </div>
-                ))}
-              </div>
-            </Section>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {premises.map((premise, index) => (
+                      <div key={premise.key} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <span className="mb-2 block text-sm font-medium text-slate-700">{premise.label}</span>
+                        <div className="grid grid-cols-[1fr_92px] gap-2">
+                          <input
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-950 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                            type="number"
+                            step="0.01"
+                            value={Number.isFinite(premise.value) ? premise.value : 0}
+                            onChange={event => updatePremise(index, { value: toNumber(event.target.value) })}
+                          />
+                          <CurrencySelect value={premise.currency} onChange={currency => updatePremise(index, { currency })} />
+                        </div>
+                        <p className="mt-2 text-sm text-slate-500">Total em reais: <strong className="text-slate-900">{brl(result.premises[index]?.valueBrl || 0)}</strong></p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
 
             {/* Products */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
